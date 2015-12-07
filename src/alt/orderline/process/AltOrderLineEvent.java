@@ -29,8 +29,7 @@ import alt.orderline.model.MALTOrderLine;
  * Alternative Output V1.0 for IDempiere 3.1 backward compatible to v2.0
  * OrderLines just refer to a single BOM defined in MProductBOM with HEADER# set in DocumentNote
  *  - the first orderline's bom parent will trigger the effect. No need for all other lines to be part of it
- *  - if there is no at least *HEADER* remark in Document Note of the parent BOM, then it won't take effect
- *  - this has no consolidation which will be done in another plugin that progressed from this idea
+ *  - at least *HEADER* remark in Document Note of the parent BOM, or it won't take effect 
  *  - idea is at http://wiki.idempiere.org/en/Plugin:_Alternative_Output
  *  @author red1
  */
@@ -44,17 +43,16 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 	private boolean DETAIL_OWN_PRICE = false;//details with prices replaced by BOM children's description or orderline description marked with *PRICE*
 	private boolean CONSOLIDATE = false; //consolidate same product to same line
 	private boolean CONSOLIDATE_SAME_LINE = false; //consolidate same product, same qty to same line
-	private boolean OUTPUT_SETTING;  
+	private boolean OUTPUT_SETTING;  //flag for parent header line at the end
 	
 	private StringBuilder HeaderString = new StringBuilder();
-	private MProduct parent = null;
-	private int stringlength = 100; //length of string for each row in Text output box 
+	private MProduct parent = null; 
 	
 	@Override
 	protected void initialize() { 
 	//register EventTopics and TableNames
 		registerTableEvent(IEventTopics.DOC_AFTER_PREPARE, MOrder.Table_Name);
-		log.info("<ORDER OUTPUT> .. IS NOW INITIALIZED");
+		log.info("<ALT-ORDERLINE> .. IS NOW INITIALIZED");
 		}
 
 	@Override
