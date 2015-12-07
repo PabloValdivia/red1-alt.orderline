@@ -97,6 +97,7 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 				
 				//************************ START OF LOOP ******************
 				for (MOrderLine orderline:orderlines){
+					int counter = 0; //for CONSOLIDATE_SAME_LINE .. used in final price multiply
 					//Is it a BOM child?
 					MProductBOM bom = new Query(Env.getCtx(),MProductBOM.Table_Name,MProductBOM.COLUMNNAME_M_ProductBOM_ID+"=?",trxName)
 					.setParameters(orderline.getM_Product_ID())
@@ -124,7 +125,7 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 							checkline.setQtyOrdered(orderline.getQtyOrdered());
 						}else { //SAME LINE QTY, so just count
 							if (CONSOLIDATE_SAME_LINE && checkline.getQtyOrdered().compareTo(orderline.getQtyOrdered())==0){
-								int counter = checkline.getCounter();
+								counter = checkline.getCounter();
 								counter++;
 								checkline.setDescription(counter+" X "+orderline.getM_Product().getName());
 								checkline.setCounter(counter);
@@ -172,7 +173,10 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 					//..!DETAIL_NO_PRICE
 					//NEW ALTORDERLINE IS SAVED
 					altorderline.setC_Order_ID(order.getC_Order_ID());
-					altorderline.setLineNetAmt(altorderline.getQtyOrdered().multiply(altorderline.getPriceList()));
+					BigDecimal ctr = Env.ONE;
+					if (counter>0)
+						ctr = new BigDecimal(counter);
+					altorderline.setLineNetAmt(altorderline.getQtyOrdered().multiply(altorderline.getPriceList()).multiply(ctr));
 					altorderline.saveEx(trxName);
 				} //************************************ END OF LOOP - OrderLine
 				if (OUTPUT_SETTING){
