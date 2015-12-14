@@ -99,13 +99,14 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 				headerline.setLine(1);   
 				headerline.setC_Order_ID(order.getC_Order_ID());
 				headerline.setC_OrderLine_ID(firstAltID);
+				headerline.setQtyOrdered(Env.ONE);
 				headerline.saveEx(trxName);
 				//
 				//************************ START OF LOOP ******************
 				for (MOrderLine orderline:orderlines){
 					int counter = 0; //for CONSOLIDATE_SAME_LINE .. used in final price multiply
-					//Is it a BOM child?
-				
+					
+					//findSetting - Is it a BOM child?
 					//ONE TIME SET, so not strict other siblings exist within BOM
 					if (!findSetting(orderline)) //BREAK when DocumentNote with HEADER# not set
 						break;
@@ -183,7 +184,10 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 					altorderline.saveEx(trxName);
 				} //************************************ END OF LOOP - OrderLine
 				if (OUTPUT_SETTING){
-					if (HEADER){						 
+					if (HEADER){
+						if (DETAIL_NO_PRICE) {
+							headerline.setLineNetAmt(order.getGrandTotal());
+						}
 						headerline.setName(HeaderString.toString());
 						headerline.saveEx(trxName);
 					} 
