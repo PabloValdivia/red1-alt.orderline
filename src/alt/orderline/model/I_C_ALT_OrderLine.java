@@ -32,7 +32,7 @@ public interface I_C_ALT_OrderLine
     /** TableName=C_ALT_OrderLine */
     public static final String Table_Name = "C_ALT_OrderLine";
 
-    /** AD_Table_ID=1000007 */
+    /** AD_Table_ID=1000000 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -81,6 +81,21 @@ public interface I_C_ALT_OrderLine
 
 	/** Get C_ALT_OrderLine_UU	  */
 	public String getC_ALT_OrderLine_UU();
+
+    /** Column name C_OrderLine_ID */
+    public static final String COLUMNNAME_C_OrderLine_ID = "C_OrderLine_ID";
+
+	/** Set Sales Order Line.
+	  * Sales Order Line
+	  */
+	public void setC_OrderLine_ID (int C_OrderLine_ID);
+
+	/** Get Sales Order Line.
+	  * Sales Order Line
+	  */
+	public int getC_OrderLine_ID();
+
+	public org.compiere.model.I_C_OrderLine getC_OrderLine() throws RuntimeException;
 
     /** Column name C_Order_ID */
     public static final String COLUMNNAME_C_Order_ID = "C_Order_ID";
@@ -206,18 +221,31 @@ public interface I_C_ALT_OrderLine
 
 	public org.compiere.model.I_M_Product getM_Product() throws RuntimeException;
 
-    /** Column name PriceList */
-    public static final String COLUMNNAME_PriceList = "PriceList";
+    /** Column name Name */
+    public static final String COLUMNNAME_Name = "Name";
 
-	/** Set List Price.
-	  * List Price
+	/** Set Name.
+	  * Alphanumeric identifier of the entity
 	  */
-	public void setPriceList (BigDecimal PriceList);
+	public void setName (String Name);
 
-	/** Get List Price.
-	  * List Price
+	/** Get Name.
+	  * Alphanumeric identifier of the entity
 	  */
-	public BigDecimal getPriceList();
+	public String getName();
+
+    /** Column name PriceEntered */
+    public static final String COLUMNNAME_PriceEntered = "PriceEntered";
+
+	/** Set Price.
+	  * Price Entered - the price based on the selected/base UoM
+	  */
+	public void setPriceEntered (BigDecimal PriceEntered);
+
+	/** Get Price.
+	  * Price Entered - the price based on the selected/base UoM
+	  */
+	public BigDecimal getPriceEntered();
 
     /** Column name QtyOrdered */
     public static final String COLUMNNAME_QtyOrdered = "QtyOrdered";

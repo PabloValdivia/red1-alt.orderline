@@ -33,7 +33,7 @@ public class X_C_ALT_OrderLine extends PO implements I_C_ALT_OrderLine, I_Persis
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20151207L;
+	private static final long serialVersionUID = 20151214L;
 
     /** Standard Constructor */
     public X_C_ALT_OrderLine (Properties ctx, int C_ALT_OrderLine_ID, String trxName)
@@ -110,6 +110,34 @@ public class X_C_ALT_OrderLine extends PO implements I_C_ALT_OrderLine, I_Persis
 	public String getC_ALT_OrderLine_UU () 
 	{
 		return (String)get_Value(COLUMNNAME_C_ALT_OrderLine_UU);
+	}
+
+	public org.compiere.model.I_C_OrderLine getC_OrderLine() throws RuntimeException
+    {
+		return (org.compiere.model.I_C_OrderLine)MTable.get(getCtx(), org.compiere.model.I_C_OrderLine.Table_Name)
+			.getPO(getC_OrderLine_ID(), get_TrxName());	}
+
+	/** Set Sales Order Line.
+		@param C_OrderLine_ID 
+		Sales Order Line
+	  */
+	public void setC_OrderLine_ID (int C_OrderLine_ID)
+	{
+		if (C_OrderLine_ID < 1) 
+			set_ValueNoCheck (COLUMNNAME_C_OrderLine_ID, null);
+		else 
+			set_ValueNoCheck (COLUMNNAME_C_OrderLine_ID, Integer.valueOf(C_OrderLine_ID));
+	}
+
+	/** Get Sales Order Line.
+		@return Sales Order Line
+	  */
+	public int getC_OrderLine_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_C_OrderLine_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
 	}
 
 	public org.compiere.model.I_C_Order getC_Order() throws RuntimeException
@@ -277,21 +305,38 @@ public class X_C_ALT_OrderLine extends PO implements I_C_ALT_OrderLine, I_Persis
 		return ii.intValue();
 	}
 
-	/** Set List Price.
-		@param PriceList 
-		List Price
+	/** Set Name.
+		@param Name 
+		Alphanumeric identifier of the entity
 	  */
-	public void setPriceList (BigDecimal PriceList)
+	public void setName (String Name)
 	{
-		set_Value (COLUMNNAME_PriceList, PriceList);
+		set_Value (COLUMNNAME_Name, Name);
 	}
 
-	/** Get List Price.
-		@return List Price
+	/** Get Name.
+		@return Alphanumeric identifier of the entity
 	  */
-	public BigDecimal getPriceList () 
+	public String getName () 
 	{
-		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_PriceList);
+		return (String)get_Value(COLUMNNAME_Name);
+	}
+
+	/** Set Price.
+		@param PriceEntered 
+		Price Entered - the price based on the selected/base UoM
+	  */
+	public void setPriceEntered (BigDecimal PriceEntered)
+	{
+		set_ValueNoCheck (COLUMNNAME_PriceEntered, PriceEntered);
+	}
+
+	/** Get Price.
+		@return Price Entered - the price based on the selected/base UoM
+	  */
+	public BigDecimal getPriceEntered () 
+	{
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_PriceEntered);
 		if (bd == null)
 			 return Env.ZERO;
 		return bd;

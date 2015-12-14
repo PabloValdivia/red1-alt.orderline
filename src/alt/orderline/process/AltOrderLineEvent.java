@@ -44,9 +44,10 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 	private boolean CONSOLIDATE = false; //consolidate same product to same line
 	private boolean CONSOLIDATE_SAME_LINE = false; //consolidate same product, same qty to same line
 	private boolean OUTPUT_SETTING;  //flag for parent header line at the end
-	
+	private MProductBOM bom = null;
 	private StringBuilder HeaderString = new StringBuilder();
-	private MProduct parent = null; 
+	private MProduct parent = null;
+	private int firstAltID; 
 	
 	@Override
 	protected void initialize() { 
@@ -92,18 +93,21 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 				.setParameters(order.getC_Order_ID())
 				.list();
 				if (orderlines==null) return;
-				
+				//
+				firstAltID = orderlines.get(0).get_ID();
+				MALTOrderLine headerline = new MALTOrderLine(Env.getCtx(), 0, trxName);
+				headerline.setLine(1);   
+				headerline.setC_Order_ID(order.getC_Order_ID());
+				headerline.setC_OrderLine_ID(firstAltID);
+				headerline.saveEx(trxName);
+				//
 				//************************ START OF LOOP ******************
 				for (MOrderLine orderline:orderlines){
 					int counter = 0; //for CONSOLIDATE_SAME_LINE .. used in final price multiply
 					//Is it a BOM child?
-					MProductBOM bom = new Query(Env.getCtx(),MProductBOM.Table_Name,MProductBOM.COLUMNNAME_M_ProductBOM_ID+"=?",trxName)
-					.setParameters(orderline.getM_Product_ID())
-					.firstOnly();
-					if (bom==null) 
-						break;//leave				
+				
 					//ONE TIME SET, so not strict other siblings exist within BOM
-					if (!findSetting(bom)) //BREAK when DocumentNote with HEADER# not set
+					if (!findSetting(orderline)) //BREAK when DocumentNote with HEADER# not set
 						break;
 					MALTOrderLine altorderline	= null;
 					
@@ -119,15 +123,15 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 							checkline.setLine(lineno);
 							checkline.setCounter(1);
 							checkline.setM_Product_ID(orderline.getM_Product_ID());
-							checkline.setDescription(orderline.getM_Product().getName());
+							checkline.setName(orderline.getM_Product().getName());
 							checkline.setQtyOrdered(orderline.getQtyOrdered());
 						}else { //SAME LINE QTY, so just count
 							if (CONSOLIDATE_SAME_LINE && checkline.getQtyOrdered().compareTo(orderline.getQtyOrdered())==0){
 								counter = checkline.getCounter();
 								counter++;
-								checkline.setDescription(counter+" X "+orderline.getM_Product().getName());
+								checkline.setName(counter+" X "+orderline.getM_Product().getName());
 								checkline.setCounter(counter);
-							} else if (CONSOLIDATE){ //Not same Qty, so just add to it.
+							} else { //Not same Qty, so just add to it.
 								
 								BigDecimal sumup = checkline.getQtyOrdered();
 								if (sumup==null)	
@@ -143,8 +147,8 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 						altorderline = new MALTOrderLine(Env.getCtx(),0,trxName);
 						altorderline.setLine(lineno);
 						altorderline.setM_Product_ID(orderline.getM_Product_ID());
-						altorderline.setDescription(orderline.getM_Product().getName()); 
-						altorderline.setPriceList(Env.ZERO); //init DETAIL_NO_PRICE
+						altorderline.setName(orderline.getM_Product().getName()); 
+						altorderline.setPriceEntered(Env.ZERO); //init DETAIL_NO_PRICE
 					}
 					//Look at other settings
 					if (!DETAIL_NO_PRICE) {
@@ -156,33 +160,31 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 								if (orderlineSplit[0].contains("PRICE")) {
 									//take from Orderline.Description PRICE# 
 									if (orderlineSplit[1].matches("^[0-9]+$"))
-										altorderline.setPriceList(new BigDecimal(orderlineSplit[1]));
+										altorderline.setPriceEntered(new BigDecimal(orderlineSplit[1]));
  	 							} 
 							} else if (bom.getDescription()!=null){
 								//take from BOMProduct.
 								if (bom.getDescription().matches("^[0-9]+$"))
-									altorderline.setPriceList(new BigDecimal(bom.getDescription()));				
+									altorderline.setPriceEntered(new BigDecimal(bom.getDescription()));				
   							}
 						} else {
 							//original price
-							altorderline.setPriceList(orderline.getPriceList());
+							altorderline.setPriceEntered(orderline.getPriceEntered());
  						}
 					}
-					//..!DETAIL_NO_PRICE
+					//..DETAIL_NO_PRICE
 					//NEW ALTORDERLINE IS SAVED
 					altorderline.setC_Order_ID(order.getC_Order_ID());
 					BigDecimal ctr = Env.ONE;
 					if (counter>0)
 						ctr = new BigDecimal(counter);
-					altorderline.setLineNetAmt(altorderline.getQtyOrdered().multiply(altorderline.getPriceList()).multiply(ctr));
+					altorderline.setLineNetAmt(altorderline.getQtyOrdered().multiply(altorderline.getPriceEntered()).multiply(ctr));
+					altorderline.setC_OrderLine_ID(orderline.getC_OrderLine_ID());
 					altorderline.saveEx(trxName);
 				} //************************************ END OF LOOP - OrderLine
 				if (OUTPUT_SETTING){
-					if (HEADER){
-						MALTOrderLine headerline = new MALTOrderLine(Env.getCtx(), 0, trxName);
-						headerline.setLine(1);  
-						headerline.setDescription(HeaderString.toString());
-						headerline.setC_Order_ID(order.getC_Order_ID());
+					if (HEADER){						 
+						headerline.setName(HeaderString.toString());
 						headerline.saveEx(trxName);
 					} 
 				}
@@ -194,11 +196,17 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 	 * @param bom
 	 * @return
 	 */
-	private boolean findSetting(MProductBOM bom) { 
+	private boolean findSetting(MOrderLine orderline) { 
 		if (OUTPUT_SETTING) //already set
 			return true;
+		MProductBOM checkbom = new Query(Env.getCtx(),MProductBOM.Table_Name,MProductBOM.COLUMNNAME_M_ProductBOM_ID+"=?",trxName)
+		.setParameters(orderline.getM_Product_ID())
+		.firstOnly();
+		if (checkbom==null) 
+			return false;//leave
+		this.bom = checkbom;
 		parent = new Query(Env.getCtx(),MProduct.Table_Name,MProduct.COLUMNNAME_M_Product_ID+"=?",trxName)
-		.setParameters(bom.getM_Product_ID())
+		.setParameters(checkbom.getM_Product_ID())
 		.firstOnly();
 		
 		if (parent==null) 
