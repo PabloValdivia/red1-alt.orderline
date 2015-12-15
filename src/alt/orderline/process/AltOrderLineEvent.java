@@ -149,6 +149,7 @@ public class AltOrderLineEvent extends AbstractEventHandler{
 						altorderline.setLine(lineno);
 						altorderline.setM_Product_ID(orderline.getM_Product_ID());
 						altorderline.setName(orderline.getM_Product().getName()); 
+						altorderline.setQtyOrdered(orderline.getQtyOrdered());
 						altorderline.setPriceEntered(Env.ZERO); //init DETAIL_NO_PRICE
 					}
 					//Look at other settings
